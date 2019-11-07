@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/index.ts"
+    "start": "ts-node src/index.ts",
+    "build": "tsc && shx rm -rf dist/templates && shx cp -r src/templates dist"
+  },
+  "bin": {
+    "gx-generator": "./dist/index.js"
   },
   "license": "MIT",
   "devDependencies": {
     "@types/inquirer": "^6.5.0",
     "@types/node": "^12.12.6",
+    "shx": "^0.3.2",
     "ts-node": "^7.0.1",
     "typescript": "^3.0.3"
   },
