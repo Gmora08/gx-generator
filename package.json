@@ -14,12 +14,14 @@
     "@types/ejs": "^2.6.3",
     "@types/inquirer": "^6.5.0",
     "@types/node": "^12.12.6",
+    "@types/shelljs": "^0.8.6",
     "shx": "^0.3.2",
     "ts-node": "^7.0.1",
     "typescript": "^3.0.3"
   },
   "dependencies": {
     "ejs": "^2.7.1",
-    "inquirer": "^7.0.0"
+    "inquirer": "^7.0.0",
+    "shelljs": "^0.8.3"
   }
 }

@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as inquirer from 'inquirer';
 import * as template from './utils/template';
+import * as shell from 'shelljs';
 import chalk from 'chalk';
 
 const CURRENT_DIR = process.cwd();
@@ -48,12 +49,12 @@ inquirer.prompt(QUESTIONS)
       templatePath,
       targetPath
     }
-    console.log(options);
 
     if (!createProject(targetPath)) {
       return;
     }
     createDirectoryContents(templatePath, projectName, currentDir);
+    postProcess(options);
   });
 
 function createProject(projectPath: string) {
@@ -97,3 +98,16 @@ function createDirectoryContents(templatePath: string, projectName: string, proj
   });
 }
 
+function postProcess(options: CliOptions) {
+  const isNode = fs.existsSync(path.join(options.templatePath, 'package.json'));
+
+  if (isNode) {
+    shell.cd(options.targetPath);
+    const result = shell.exec('npm install');
+    if (result.code !== 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
