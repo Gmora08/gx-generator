@@ -3,6 +3,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as inquirer from 'inquirer';
+import * as template from './utils/template';
 import chalk from 'chalk';
 
 const CURRENT_DIR = process.cwd();
@@ -83,6 +84,7 @@ function createDirectoryContents(templatePath: string, projectName: string, proj
     if (stats.isFile()) {
       // read file content and transform it using template engine
       let contents = fs.readFileSync(origFilePath, 'utf8');
+      contents = template.render(contents, { projectName });
       // write file to destination folder
       const writePath = path.join(projectPath, projectName, file);
       fs.writeFileSync(writePath, contents, 'utf8');
