@@ -38,16 +38,23 @@ const QUESTIONS = [
     default: '1.0.0'
   },
   {
+    name: 'shouldLinkRemoteRepo',
+    type: 'confirm',
+    message: 'Add remote git repository?'
+  },
+  {
     name: 'projectRepository',
     type: 'input',
-    message: "Project repository link: "
+    message: "Project repository link: ",
+    default: "",
+    when: (answers: object) => answers["shouldLinkRemoteRepo"]
   },
   {
     name: 'projectPath',
     type: 'input',
     message: 'Project path',
     default: CURRENT_DIR
-  }
+  },
 ];
 
 export interface CliOptions {
