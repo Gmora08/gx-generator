@@ -1,0 +1,9 @@
+{
+  "verbose": true,
+  "forceExit": true,
+  "testRegex": ".*.test.js$",
+  "testEnvironment": "node",
+  "setupFilesAfterEnv": [
+    "jest-chain"
+  ]
+}
