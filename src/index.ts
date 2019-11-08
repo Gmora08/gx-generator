@@ -32,6 +32,17 @@ const QUESTIONS = [
     message: 'Project author: '
   },
   {
+    name: 'projectVersion',
+    type: 'input',
+    message: 'Project version: ',
+    default: '1.0.0'
+  },
+  {
+    name: 'projectRepository',
+    type: 'input',
+    message: "Project repository link: "
+  },
+  {
     name: 'projectPath',
     type: 'input',
     message: 'Project path',
@@ -46,6 +57,8 @@ export interface CliOptions {
   templateName: string
   templatePath: string
   targetPath: string
+  projectVersion: string
+  projectRepository: string
 }
 
 inquirer.prompt(QUESTIONS)
@@ -55,6 +68,8 @@ inquirer.prompt(QUESTIONS)
     const projectName: string = answers['name'].toString();
     const currentDir: string = answers['projectPath'].toString();
     const projectDescription: string = answers['projectDescription'].toString();
+    const projectVersion: string = answers['projectVersion'].toString();
+    const projectRepository: string = answers['projectRepository'].toString();
     const templatePath = path.join(__dirname, 'templates', projectChoice);
     const targetPath = path.join(currentDir, projectName);;
     const options: CliOptions = {
@@ -63,13 +78,15 @@ inquirer.prompt(QUESTIONS)
       projectDescription,
       templateName: projectChoice,
       templatePath,
-      targetPath
+      targetPath,
+      projectVersion,
+      projectRepository
     }
 
     if (!createProject(targetPath)) {
       return;
     }
-    createDirectoryContents(templatePath, projectName, currentDir);
+    createDirectoryContents(templatePath, projectName, options, currentDir);
     postProcess(options);
   });
 
@@ -85,7 +102,7 @@ function createProject(projectPath: string) {
 
 // list of file/folder that should not be copied
 const SKIP_FILES = ['node_modules', '.template.json'];
-function createDirectoryContents(templatePath: string, projectName: string, projectPath: string) {
+function createDirectoryContents(templatePath: string, projectName: string, options: CliOptions, projectPath: string) {
   // read all files/folders (1 level) from template folder
   const filesToCreate = fs.readdirSync(templatePath);
   // loop each file/folder
@@ -101,7 +118,7 @@ function createDirectoryContents(templatePath: string, projectName: string, proj
     if (stats.isFile()) {
       // read file content and transform it using template engine
       let contents = fs.readFileSync(origFilePath, 'utf8');
-      contents = template.render(contents, { projectName });
+      contents = template.render(contents, options);
       // write file to destination folder
       const writePath = path.join(projectPath, projectName, file);
       fs.writeFileSync(writePath, contents, 'utf8');
@@ -109,7 +126,7 @@ function createDirectoryContents(templatePath: string, projectName: string, proj
       // create folder in destination folder
       fs.mkdirSync(path.join(projectPath, projectName, file));
       // copy files/folder inside current folder recursively
-      createDirectoryContents(path.join(templatePath, file), path.join(projectName, file), projectPath);
+      createDirectoryContents(path.join(templatePath, file), path.join(projectName, file), options, projectPath);
     }
   });
 }
