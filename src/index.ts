@@ -22,6 +22,16 @@ const QUESTIONS = [
     message: 'Project name: '
   },
   {
+    name: 'projectDescription',
+    type: 'input',
+    message: 'Project description: '
+  },
+  {
+    name: 'projectAuthor',
+    type: 'input',
+    message: 'Project author: '
+  },
+  {
     name: 'projectPath',
     type: 'input',
     message: 'Project path',
@@ -30,7 +40,9 @@ const QUESTIONS = [
 ];
 
 export interface CliOptions {
+  projectAuthor: string
   projectName: string
+  projectDescription: string
   templateName: string
   templatePath: string
   targetPath: string
@@ -38,13 +50,17 @@ export interface CliOptions {
 
 inquirer.prompt(QUESTIONS)
   .then(answers => {
+    const projectAuthor: string = answers['projectAuthor'].toString();
     const projectChoice: string = answers['template'].toString();
     const projectName: string = answers['name'].toString();
     const currentDir: string = answers['projectPath'].toString();
+    const projectDescription: string = answers['projectDescription'].toString();
     const templatePath = path.join(__dirname, 'templates', projectChoice);
     const targetPath = path.join(currentDir, projectName);;
     const options: CliOptions = {
+      projectAuthor,
       projectName,
+      projectDescription,
       templateName: projectChoice,
       templatePath,
       targetPath
