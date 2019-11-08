@@ -32,7 +32,7 @@ steps:
   inputs:
     command: build
     azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
-    azureContainerRegistry: $(azureContainerRegistry)    
+    azureContainerRegistry: $(azureContainerRegistry)
     dockerFile: Dockerfile
     imageName: $(imageName)
 
@@ -42,16 +42,16 @@ steps:
   inputs:
     azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
     azureContainerRegistry: $(azureContainerRegistry)
-    imageName: $(azureContainerRegistry)/$(imageName)    
+    imageName: $(azureContainerRegistry)/$(imageName)
     command: run
     containerName: unittests
-    volumes: '$(Build.Repository.LocalPath):/app/test_results'    
+    volumes: '$(Build.Repository.LocalPath):/app/test_results'
     workingDirectory: /app
     containerCommand: 'npm run unit-tests'
     runInBackground: false
   continueOnError: true
 
-# Upload Tests Results to Analytics 
+# Upload Tests Results to Analytics
 - task: PublishTestResults@2
   displayName: 'Publish Test Results unit-test-results.xml'
   inputs:

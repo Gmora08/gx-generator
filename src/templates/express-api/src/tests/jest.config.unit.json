@@ -1,17 +1,17 @@
 {
-  "name": "gx-boa-back-graphql",
+  "name": "<%= projectName %>",
+  "verbose": true,
   "reporters": [
     "default",
     [
       "jest-junit",
       {
         "outputDirectory": "./test_results",
-        "outputName": "./integration-test-results.xml"
+        "outputName": "./unit-test-results.xml"
       }
     ]
   ],
-  "verbose": true,
-  "testRegex": ".*.ispec.test.js$",
+  "testRegex": ".*.unit.test.js$",
   "testEnvironment": "node",
   "setupFilesAfterEnv": [
     "jest-chain"

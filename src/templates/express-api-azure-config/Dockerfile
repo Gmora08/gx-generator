@@ -27,7 +27,7 @@ RUN apk update \
   && apk update \
   && apk add openssh-server \
   && rc-status && touch /run/openrc/softlevel \
-  && echo "root:Docker!" | chpasswd 
+  && echo "root:Docker!" | chpasswd
 
 COPY sshd_config /etc/ssh/
 COPY init.sh /usr/local/bin/
