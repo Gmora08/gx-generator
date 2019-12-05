@@ -9,6 +9,7 @@ import chalk from 'chalk';
 
 const CURRENT_DIR = process.cwd();
 const CHOICES = fs.readdirSync(path.join(__dirname, 'templates'));
+const DB_CHOICES = ['sql server', 'postgresql'];
 const QUESTIONS = [
   {
     name: 'template',
@@ -38,15 +39,25 @@ const QUESTIONS = [
     default: '1.0.0'
   },
   {
+    name: 'dbms',
+    type: 'list',
+    choices: DB_CHOICES,
+  },
+  {
+    name: 'shouldInitGitRepo',
+    type: 'confirm',
+    message: 'Init local git repository?'
+  },
+  {
     name: 'shouldLinkRemoteRepo',
     type: 'confirm',
-    message: 'Add remote git repository?'
+    message: 'Add remote git repository?',
+    default: 'N'
   },
   {
     name: 'projectRepository',
     type: 'input',
     message: "Project repository link: ",
-    default: "",
     when: (answers: object) => answers["shouldLinkRemoteRepo"]
   },
   {
@@ -66,6 +77,8 @@ export interface CliOptions {
   targetPath: string
   projectVersion: string
   projectRepository: string
+  shouldInitGitRepo: boolean
+  shouldLinkRemoteRepo: boolean
 }
 
 inquirer.prompt(QUESTIONS)
@@ -76,9 +89,11 @@ inquirer.prompt(QUESTIONS)
     const currentDir: string = answers['projectPath'].toString();
     const projectDescription: string = answers['projectDescription'].toString();
     const projectVersion: string = answers['projectVersion'].toString();
-    const projectRepository: string = answers['projectRepository'].toString();
+    const projectRepository: string = answers['projectRepository'];
     const templatePath = path.join(__dirname, 'templates', projectChoice);
-    const targetPath = path.join(currentDir, projectName);;
+    const targetPath = path.join(currentDir, projectName);
+    const shouldInitGitRepo: boolean = answers['shouldInitGitRepo'];
+    const shouldLinkRemoteRepo: boolean = answers['shouldLinkRemoteRepo'];
     const options: CliOptions = {
       projectAuthor,
       projectName,
@@ -87,7 +102,9 @@ inquirer.prompt(QUESTIONS)
       templatePath,
       targetPath,
       projectVersion,
-      projectRepository
+      projectRepository,
+      shouldInitGitRepo,
+      shouldLinkRemoteRepo
     }
 
     if (!createProject(targetPath)) {
@@ -95,6 +112,8 @@ inquirer.prompt(QUESTIONS)
     }
     createDirectoryContents(templatePath, projectName, options, currentDir);
     postProcess(options);
+    initGitRepository(options);
+    linkRemoteRepository(options);
   });
 
 function createProject(projectPath: string) {
@@ -148,6 +167,26 @@ function postProcess(options: CliOptions) {
       return false;
     }
   }
+
+  return true;
+}
+
+function initGitRepository(options: CliOptions) {
+  if (!options.shouldInitGitRepo) { return false; }
+
+  shell.cd(options.targetPath);
+  shell.exec('git init .');
+  shell.exec('git add .');
+  shell.exec('git commit -am "inital setup"');
+
+  return true;
+}
+
+function linkRemoteRepository(options: CliOptions) {
+  if (!options.shouldLinkRemoteRepo) { return false; }
+
+  shell.cd(options.targetPath);
+  shell.exec(`git remote add origin ${options.projectRepository}`);
 
   return true;
 }
