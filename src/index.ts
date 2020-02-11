@@ -213,9 +213,6 @@ function setupNewRelic(configFilesPath: string, projectPath: string, options: Cl
   shell.cd(options.targetPath);
   shell.exec('npm install --save newrelic');
   // copy config file
-  console.log(`${configFilesPath}/newrelic/newrelic.js`);
-  console.log(projectPath);
-
   shell.cp(`${configFilesPath}/newrelic/newrelic.js`, projectPath);
 
   return true;
