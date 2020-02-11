@@ -9,7 +9,7 @@ import chalk from 'chalk';
 
 const CURRENT_DIR = process.cwd();
 const CHOICES = fs.readdirSync(path.join(__dirname, 'templates'));
-const DB_CHOICES = ['sql server', 'postgresql'];
+const DB_CHOICES = ['Postgresql', 'Sqlserver :(', 'None'];
 const QUESTIONS = [
   {
     name: 'template',
@@ -78,7 +78,8 @@ export interface CliOptions {
   projectVersion: string
   projectRepository: string
   shouldInitGitRepo: boolean
-  shouldLinkRemoteRepo: boolean
+  shouldLinkRemoteRepo: boolean,
+  dbms: string
 }
 
 inquirer.prompt(QUESTIONS)
@@ -94,6 +95,7 @@ inquirer.prompt(QUESTIONS)
     const targetPath = path.join(currentDir, projectName);
     const shouldInitGitRepo: boolean = answers['shouldInitGitRepo'];
     const shouldLinkRemoteRepo: boolean = answers['shouldLinkRemoteRepo'];
+    const dbms: string = answers['dbms'];
     const options: CliOptions = {
       projectAuthor,
       projectName,
@@ -104,7 +106,8 @@ inquirer.prompt(QUESTIONS)
       projectVersion,
       projectRepository,
       shouldInitGitRepo,
-      shouldLinkRemoteRepo
+      shouldLinkRemoteRepo,
+      dbms
     }
 
     if (!createProject(targetPath)) {
@@ -112,6 +115,7 @@ inquirer.prompt(QUESTIONS)
     }
     createDirectoryContents(templatePath, projectName, options, currentDir);
     postProcess(options);
+    setDbConfiguration(options);
     initGitRepository(options);
     linkRemoteRepository(options);
   });
@@ -189,4 +193,15 @@ function linkRemoteRepository(options: CliOptions) {
   shell.exec(`git remote add origin ${options.projectRepository}`);
 
   return true;
+}
+
+function setDbConfiguration(options: CliOptions) {
+  switch (options.dbms) {
+    case 'Postgresql':
+      shell.cd(options.targetPath);
+    // shell.
+
+    default:
+      return true;
+  }
 }

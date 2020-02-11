@@ -1,0 +1,19 @@
+version: '3'
+services:
+  # MIGRATION CONTAINER (EXECUTES MIGRATION TO SQL SERVER)
+  flyway:
+    image: boxfuse/flyway
+    command: -url=jdbc:sqlserver://sql-server:1433; -user='sa' -password=D3v3lopm3ntGx -connectRetries=60 migrate
+    volumes:
+      - ./migrations:/flyway/sql
+    depends_on:
+      - sql-server
+  # SQL SERVER
+  # !!!!!!! please check that your VM have at least 2024 mb RAM memory !!!!!!!
+  sql-server:
+    image: mcr.microsoft.com/mssql/server
+    environment:
+      - SA_PASSWORD=D3v3lopm3ntGx
+      - ACCEPT_EULA=Y
+    ports:
+      - "1433:1433"
