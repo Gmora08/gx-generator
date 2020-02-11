@@ -66,6 +66,12 @@ const QUESTIONS = [
     message: 'Project path',
     default: CURRENT_DIR
   },
+  {
+    name: 'setNewRelic',
+    type: 'confirm',
+    message: 'Add newrelic integration',
+    default: 'N'
+  }
 ];
 
 export interface CliOptions {
@@ -79,11 +85,13 @@ export interface CliOptions {
   projectRepository: string
   shouldInitGitRepo: boolean
   shouldLinkRemoteRepo: boolean,
-  dbms: string
+  dbms: string,
+  setNewRelic: boolean,
 }
 
 inquirer.prompt(QUESTIONS)
   .then(answers => {
+    const configFilesTemplate = path.join(__dirname, 'complementary_files');
     const projectAuthor: string = answers['projectAuthor'].toString();
     const projectChoice: string = answers['template'].toString();
     const projectName: string = answers['name'].toString();
@@ -96,6 +104,7 @@ inquirer.prompt(QUESTIONS)
     const shouldInitGitRepo: boolean = answers['shouldInitGitRepo'];
     const shouldLinkRemoteRepo: boolean = answers['shouldLinkRemoteRepo'];
     const dbms: string = answers['dbms'];
+    const setNewRelic: boolean = answers['setNewRelic'];
     const options: CliOptions = {
       projectAuthor,
       projectName,
@@ -107,7 +116,8 @@ inquirer.prompt(QUESTIONS)
       projectRepository,
       shouldInitGitRepo,
       shouldLinkRemoteRepo,
-      dbms
+      dbms,
+      setNewRelic,
     }
 
     if (!createProject(targetPath)) {
@@ -116,6 +126,8 @@ inquirer.prompt(QUESTIONS)
     createDirectoryContents(templatePath, projectName, options, currentDir);
     postProcess(options);
     setDbConfiguration(options);
+    setupNewRelic(configFilesTemplate, `${currentDir}/${projectName}`, options);
+    // This instructions should be the last
     initGitRepository(options);
     linkRemoteRepository(options);
   });
@@ -181,7 +193,7 @@ function initGitRepository(options: CliOptions) {
   shell.cd(options.targetPath);
   shell.exec('git init .');
   shell.exec('git add .');
-  shell.exec('git commit -am "inital setup"');
+  shell.exec('git commit -am "Inital setup"');
 
   return true;
 }
@@ -191,6 +203,20 @@ function linkRemoteRepository(options: CliOptions) {
 
   shell.cd(options.targetPath);
   shell.exec(`git remote add origin ${options.projectRepository}`);
+
+  return true;
+}
+
+function setupNewRelic(configFilesPath: string, projectPath: string, options: CliOptions) {
+  if (!options.setNewRelic) { return false; }
+  // install newrelic dependency
+  shell.cd(options.targetPath);
+  shell.exec('npm install --save newrelic');
+  // copy config file
+  console.log(`${configFilesPath}/newrelic/newrelic.js`);
+  console.log(projectPath);
+
+  shell.cp(`${configFilesPath}/newrelic/newrelic.js`, projectPath);
 
   return true;
 }
