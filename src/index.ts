@@ -114,6 +114,8 @@ inquirer.prompt(QUESTIONS)
     const setTypeOrm: string = answers['setTypeOrm'];
     const setNewRelic: boolean = answers['setNewRelic'];
     const setSentry: boolean = answers['setSentry'];
+    const projectPath: string = `${currentDir}/${projectName}`
+    const appFilePath: string = path.join(projectPath, 'src/app.js')
     const options: CliOptions = {
       projectAuthor,
       projectName,
@@ -135,9 +137,9 @@ inquirer.prompt(QUESTIONS)
     }
     createDirectoryContents(templatePath, projectName, options, currentDir);
     postProcess(options);
-    setTypeORMConfiguration(configFilesTemplate, `${currentDir}/${projectName}`, options);
-    setupNewRelic(configFilesTemplate, `${currentDir}/${projectName}`, options);
-    setupSentry(`${currentDir}/${projectName}`, options)
+    setTypeORMConfiguration(configFilesTemplate, projectPath, appFilePath, options);
+    setupNewRelic(configFilesTemplate, projectPath, options);
+    setupSentry(projectPath, appFilePath, options)
     // This instructions should be the last
     initGitRepository(options);
     linkRemoteRepository(options);
@@ -229,20 +231,20 @@ function setupNewRelic(configFilesPath: string, projectPath: string, options: Cl
   return true;
 }
 
-function setupSentry(projectPath: string, options: CliOptions){
+function setupSentry(projectPath: string, appFilePath: string, options: CliOptions){
   if (!options.setSentry) { return false; }
   shell.cd(options.targetPath);
   shell.exec('npm install @sentry/node@5.12.2')
-  const appFilePath = path.join(projectPath, 'src/app.js')
+  
   const envSampleFilePath = path.join(projectPath, '.env.sample')
   shell.exec(`sed -i \'/^const app = express().*/i const Sentry = require("@sentry/node");\\n\' ${appFilePath}`)
   shell.exec(`sed -i \'/^const app = express().*/a Sentry.init({ dsn: process.env.SENTRY_DSN });\\napp.use(Sentry.Handlers.requestHandler());\\n\' ${appFilePath}`)
   shell.exec(`sed -i \'/^app.use(router);.*/a app.use(Sentry.Handlers.errorHandler());\' ${appFilePath} `)
-  shell.exec(`sed -i \'$a SENTRY_DSN=""\' ${envSampleFilePath}`)
+  shell.exec(`sed -i \'$a export SENTRY_DSN=""\' ${envSampleFilePath}`)
   return true;
 }
 
-function setTypeORMConfiguration(configFilesPath: string, projectPath: string, options: CliOptions) {
+function setTypeORMConfiguration(configFilesPath: string, projectPath: string,  appFilePath: string, options: CliOptions) {
   if(options.setTypeOrm === 'None'){ return false; }
 
   shell.cd(options.targetPath);
@@ -255,12 +257,13 @@ function setTypeORMConfiguration(configFilesPath: string, projectPath: string, o
     case 'Sqlserver':
       shell.exec('npm install mssql --save');
   }
-  const appFilePath = path.join(projectPath, 'src/app.js')
   // Add import on app file
   shell.cp(`${configFilesPath}/typeorm/ormconfig.json`, projectPath);
   shell.exec(`sed -i \'2 i\\import "reflect-metadata";\' ${appFilePath}`)
   fs.mkdirSync('src/entity');
   fs.mkdirSync('src/migration');
+  const envSampleFilePath = path.join(projectPath, '.env.sample')
+  shell.exec(`sed -i \'$a export PORT=80\\nexport SQL_DATABASE=""\\nexport SQL_HOST=""\\nexport SQL_PASS=""\\nexport SQL_PORT=""\\nexport SQL_USER=""\' ${envSampleFilePath}`)
  
   return true;
 }
