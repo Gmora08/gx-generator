@@ -72,6 +72,12 @@ const QUESTIONS = [
     type: 'confirm',
     message: 'Add newrelic integration',
     default: 'N'
+  },
+  {
+    name: 'setSentry',
+    type: 'confirm',
+    message: 'Add Sentry integration',
+    default: 'N'
   }
 ];
 
@@ -88,6 +94,7 @@ export interface CliOptions {
   shouldLinkRemoteRepo: boolean,
   setTypeOrm: string,
   setNewRelic: boolean,
+  setSentry: boolean
 }
 
 inquirer.prompt(QUESTIONS)
@@ -106,6 +113,7 @@ inquirer.prompt(QUESTIONS)
     const shouldLinkRemoteRepo: boolean = answers['shouldLinkRemoteRepo'];
     const setTypeOrm: string = answers['setTypeOrm'];
     const setNewRelic: boolean = answers['setNewRelic'];
+    const setSentry: boolean = answers['setSentry'];
     const options: CliOptions = {
       projectAuthor,
       projectName,
@@ -119,6 +127,7 @@ inquirer.prompt(QUESTIONS)
       shouldLinkRemoteRepo,
       setTypeOrm,
       setNewRelic,
+      setSentry
     }
 
     if (!createProject(targetPath)) {
@@ -128,6 +137,7 @@ inquirer.prompt(QUESTIONS)
     postProcess(options);
     setTypeORMConfiguration(configFilesTemplate, `${currentDir}/${projectName}`, options);
     setupNewRelic(configFilesTemplate, `${currentDir}/${projectName}`, options);
+    setupSentry(`${currentDir}/${projectName}`, options)
     // This instructions should be the last
     initGitRepository(options);
     linkRemoteRepository(options);
@@ -216,6 +226,19 @@ function setupNewRelic(configFilesPath: string, projectPath: string, options: Cl
   // copy config file
   shell.cp(`${configFilesPath}/newrelic/newrelic.js`, projectPath);
 
+  return true;
+}
+
+function setupSentry(projectPath: string, options: CliOptions){
+  if (!options.setSentry) { return false; }
+  shell.cd(options.targetPath);
+  shell.exec('npm install @sentry/node@5.12.2')
+  const appFilePath = path.join(projectPath, 'src/app.js')
+  const envSampleFilePath = path.join(projectPath, '.env.sample')
+  shell.exec(`sed -i \'/^const app = express().*/i const Sentry = require("@sentry/node");\\n\' ${appFilePath}`)
+  shell.exec(`sed -i \'/^const app = express().*/a Sentry.init({ dsn: process.env.SENTRY_DSN });\\napp.use(Sentry.Handlers.requestHandler());\\n\' ${appFilePath}`)
+  shell.exec(`sed -i \'/^app.use(router);.*/a app.use(Sentry.Handlers.errorHandler());\' ${appFilePath} `)
+  shell.exec(`sed -i \'$a SENTRY_DSN=""\' ${envSampleFilePath}`)
   return true;
 }
 
