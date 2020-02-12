@@ -9,7 +9,7 @@ import chalk from 'chalk';
 
 const CURRENT_DIR = process.cwd();
 const CHOICES = fs.readdirSync(path.join(__dirname, 'templates'));
-const DB_CHOICES = ['Postgresql', 'Sqlserver :(', 'None'];
+const DB_CHOICES = ['Postgresql', 'Sqlserver', 'None'];
 const QUESTIONS = [
   {
     name: 'template',
@@ -39,8 +39,9 @@ const QUESTIONS = [
     default: '1.0.0'
   },
   {
-    name: 'dbms',
+    name: 'setTypeOrm',
     type: 'list',
+    message: 'Add TypeORM',
     choices: DB_CHOICES,
   },
   {
@@ -85,7 +86,7 @@ export interface CliOptions {
   projectRepository: string
   shouldInitGitRepo: boolean
   shouldLinkRemoteRepo: boolean,
-  dbms: string,
+  setTypeOrm: string,
   setNewRelic: boolean,
 }
 
@@ -103,7 +104,7 @@ inquirer.prompt(QUESTIONS)
     const targetPath = path.join(currentDir, projectName);
     const shouldInitGitRepo: boolean = answers['shouldInitGitRepo'];
     const shouldLinkRemoteRepo: boolean = answers['shouldLinkRemoteRepo'];
-    const dbms: string = answers['dbms'];
+    const setTypeOrm: string = answers['setTypeOrm'];
     const setNewRelic: boolean = answers['setNewRelic'];
     const options: CliOptions = {
       projectAuthor,
@@ -116,7 +117,7 @@ inquirer.prompt(QUESTIONS)
       projectRepository,
       shouldInitGitRepo,
       shouldLinkRemoteRepo,
-      dbms,
+      setTypeOrm,
       setNewRelic,
     }
 
@@ -125,7 +126,7 @@ inquirer.prompt(QUESTIONS)
     }
     createDirectoryContents(templatePath, projectName, options, currentDir);
     postProcess(options);
-    setDbConfiguration(options);
+    setTypeORMConfiguration(configFilesTemplate, `${currentDir}/${projectName}`, options);
     setupNewRelic(configFilesTemplate, `${currentDir}/${projectName}`, options);
     // This instructions should be the last
     initGitRepository(options);
@@ -213,21 +214,30 @@ function setupNewRelic(configFilesPath: string, projectPath: string, options: Cl
   shell.cd(options.targetPath);
   shell.exec('npm install --save newrelic');
   // copy config file
-  console.log(`${configFilesPath}/newrelic/newrelic.js`);
-  console.log(projectPath);
-
   shell.cp(`${configFilesPath}/newrelic/newrelic.js`, projectPath);
 
   return true;
 }
 
-function setDbConfiguration(options: CliOptions) {
-  switch (options.dbms) {
-    case 'Postgresql':
-      shell.cd(options.targetPath);
-    // shell.
+function setTypeORMConfiguration(configFilesPath: string, projectPath: string, options: CliOptions) {
+  if(options.setTypeOrm === 'None'){ return false; }
 
-    default:
-      return true;
+  shell.cd(options.targetPath);
+  shell.exec('npm install typeorm --save');
+  shell.exec('npm install reflect-metadata --save');
+  shell.exec('npm install @types/node --save')
+  switch (options.setTypeOrm) {
+    case 'Postgresql':
+      shell.exec('npm install pg --save');
+    case 'Sqlserver':
+      shell.exec('npm install mssql --save');
   }
+  const appFilePath = path.join(projectPath, 'src/app.js')
+  // Add import on app file
+  shell.cp(`${configFilesPath}/typeorm/ormconfig.json`, projectPath);
+  shell.exec(`sed -i \'2 i\\import "reflect-metadata";\' ${appFilePath}`)
+  fs.mkdirSync('src/entity');
+  fs.mkdirSync('src/migration');
+ 
+  return true;
 }
