@@ -1,0 +1,105 @@
+# Docker image.
+# Build a Docker image to deploy, run, or push to a container registry.
+# Add steps that use Docker Compose, tag images, push to a registry, run an image, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+name: $(SourceBranchName)
+pool:
+  vmImage: 'Ubuntu-16.04'
+
+jobs:
+- job: GetVersion
+  displayName: Get Version
+  steps:
+  - bash: |
+      VERSIONT=$(jq -r .version package.json)
+      echo "##vso[task.setvariable variable=version;isOutput=true]$VERSIONT"     
+    name: App 
+
+- job: Build
+  displayName: Build 
+  dependsOn: GetVersion
+  variables:
+    appVersion: $[ dependencies.GetVersion.outputs['App.version'] ]
+    buildVersion: "$(appVersion)"
+  # Update build number in Pipeline UI
+  steps:
+  - bash: echo "##vso[build.updatebuildnumber]$(buildVersion)" # Update build number in Pipeline UI
+    displayName: Update build number   
+
+# Login into Azure
+  - task: Docker@1
+    displayName: Login into Azure container registry
+    condition: always()
+    inputs:
+      command: login
+      azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
+      azureContainerRegistry: $(azureContainerRegistry)
+
+  # Setting name, commit and date
+  - task: Bash@3
+    displayName: Setting name, commit and date
+    inputs:
+      targetType: 'inline'
+      script: |
+        echo "##vso[task.setvariable variable=NAMET]$(jq -r .name package.json)"
+        echo "##vso[task.setvariable variable=COMMITT]$(git log -1 --format=%H)"
+        echo "##vso[task.setvariable variable=DATET]$(date +%F)"
+
+  # Build image
+  - task: Docker@1
+    displayName: Build image
+    inputs:
+      command: build
+      azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
+      azureContainerRegistry: $(azureContainerRegistry)    
+      dockerFile: Dockerfile
+      arguments: --build-arg NAMET=$(NAMET) --build-arg VERSIONT=$(buildVersion) --build-arg COMMITT=$(COMMITT) --build-arg DATET=$(DATET)
+      imageName: $(Build.Repository.Name):v$(buildVersion)
+
+  # Perform TESTS
+  - task: Docker@1
+    displayName: 'Running unit tests'
+    inputs:
+      azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
+      azureContainerRegistry: $(azureContainerRegistry)
+      imageName: $(azureContainerRegistry)/$(Build.Repository.Name):v$(buildVersion)    
+      command: run
+      containerName: unittests
+      volumes: '$(Build.Repository.LocalPath):/app/test_results'    
+      workingDirectory: /app
+      containerCommand: 'npm run unit-tests'
+      runInBackground: false
+
+  # Upload Tests Results to Analytics 
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results unit-test-results.xml'
+    inputs:
+      testResultsFiles: '$(Build.Repository.LocalPath)/unit-test-results.xml'
+      testRunTitle: 'Unit Tests Results Upload'
+    continueOnError: true
+    condition: succeededOrFailed()
+
+  # Push this new image to container registry
+  - task: Docker@1
+    displayName: Push image to Azure container registry
+    inputs:
+      command: push
+      azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
+      azureContainerRegistry: $(azureContainerRegistry)
+      imageName: $(Build.Repository.Name):v$(buildVersion)
+
+  # Logout after all tasks finished
+  - task: Docker@1
+    displayName: Logout Azure container registry
+    condition: always()
+    inputs:
+      command: logout
+      azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
+      azureContainerRegistry: $(azureContainerRegistry)
+
+  # sleep until release
+  # Sleep 10 seconds
+  - bash: |
+      sleep 10   
+    displayName: Wait till Image is Up
