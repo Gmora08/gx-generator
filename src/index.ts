@@ -288,8 +288,8 @@ function setTypeORMConfiguration(filesPath: files, options: CliOptions) {
   // Add import on app file
   shell.cp(`${filesPath.configFilesTemplate}/typeorm/ormconfig.json`, filesPath.projectPath);
   shell.exec(`sed -i \'2 i\\import "reflect-metadata";\' ${filesPath.appFilePath}`)
-  fs.mkdirSync('src/entity');
-  fs.mkdirSync('src/migration');
+  fs.mkdirSync('src/components/entity');
+  fs.mkdirSync('src/migrations');
   shell.exec(`sed -i \'$a export SQL_DATABASE=""\\nexport SQL_HOST=""\\nexport SQL_PASS=""\\nexport SQL_PORT=""\\nexport SQL_USER=""\' ${filesPath.envSampleFilePath}`)
  
   return true;

@@ -8,9 +8,9 @@
     "synchronize": true,
     "logging": false,
     "entities": [
-       "src/entity/**/*.js"
+       "src/components/entity/**/*.js"
     ],
     "migrations": [
-       "src/migration/**/*.js"
+       "src/migrations/**/*.js"
     ]
  }
