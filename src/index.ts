@@ -263,7 +263,7 @@ function setupNewRelic(configFilesPath: string, projectPath: string, options: Cl
 function setupSentry(filesPath: files, options: CliOptions){
   if (!options.setSentry) { return false; }
   shell.cd(options.targetPath);
-  shell.exec('npm install @sentry/node@5.12.2')
+  shell.exec('npm install @sentry/node@5.15.5')
   
   shell.exec(`sed -i \'/^const app = express().*/i const Sentry = require("@sentry/node");\\n\' ${filesPath.appFilePath}`)
   shell.exec(`sed -i \'/^const app = express().*/a Sentry.init({ dsn: process.env.SENTRY_DSN });\\napp.use(Sentry.Handlers.requestHandler());\\n\' ${filesPath.appFilePath}`)
