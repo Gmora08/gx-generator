@@ -263,7 +263,7 @@ function setupNewRelic(configFilesPath: string, projectPath: string, options: Cl
 function setupSentry(filesPath: files, options: CliOptions){
   if (!options.setSentry) { return false; }
   shell.cd(options.targetPath);
-  shell.exec('npm install @sentry/node@5.12.2')
+  shell.exec('npm install @sentry/node@5.15.5')
   
   shell.exec(`sed -i \'/^const app = express().*/i const Sentry = require("@sentry/node");\\n\' ${filesPath.appFilePath}`)
   shell.exec(`sed -i \'/^const app = express().*/a Sentry.init({ dsn: process.env.SENTRY_DSN });\\napp.use(Sentry.Handlers.requestHandler());\\n\' ${filesPath.appFilePath}`)
@@ -288,8 +288,8 @@ function setTypeORMConfiguration(filesPath: files, options: CliOptions) {
   // Add import on app file
   shell.cp(`${filesPath.configFilesTemplate}/typeorm/ormconfig.json`, filesPath.projectPath);
   shell.exec(`sed -i \'2 i\\import "reflect-metadata";\' ${filesPath.appFilePath}`)
-  fs.mkdirSync('src/entity');
-  fs.mkdirSync('src/migration');
+  fs.mkdirSync('src/components/entity');
+  fs.mkdirSync('src/migrations');
   shell.exec(`sed -i \'$a export SQL_DATABASE=""\\nexport SQL_HOST=""\\nexport SQL_PASS=""\\nexport SQL_PORT=""\\nexport SQL_USER=""\' ${filesPath.envSampleFilePath}`)
  
   return true;
