@@ -60,6 +60,7 @@
   "dependencies": {
     "@babel/polyfill": "^7.8.7",
     "@hapi/joi": "^17.1.1",
+    "babel-plugin-root-import": "^6.4.1",
     "applicationinsights": "^1.7.5",
     "axios": "^0.19.2",
     "body-parser": "^1.19.0",
