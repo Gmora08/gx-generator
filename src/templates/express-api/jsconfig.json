@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+      "resolveJsonModule": true,
+      "target": "es6",
+      "module": "commonjs",
+      "checkJs": true,
+      "baseUrl": "./",
+      "paths": {
+        "~/*": ["./*"]
+      }
+    },
+    "exclude": ["node_modules"]
+}
